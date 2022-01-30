@@ -1,17 +1,18 @@
 import * as THREE from "three";
 import constants from "../constants";
+import chroma from "chroma-js";
 
 export const Floor = () => {
     const { gridX, gridZ, cellSize } = constants;
 
-    const height = cellSize * 0.1;
+    const chromaScale = chroma.scale(["#000000", "#529aff"]);
 
     var floor = new THREE.Mesh(
-        new THREE.BoxBufferGeometry(cellSize * gridX, height, cellSize * gridZ),
-        new THREE.MeshLambertMaterial({ color: "#0b4263" })
+        new THREE.PlaneGeometry(cellSize * gridX, cellSize * gridZ),
+        new THREE.MeshLambertMaterial({ color: chromaScale(0.25).hex(), transparent: true, opacity: 0.6 })
     );
 
-    floor.position.y = -height * 0.5;
+    floor.rotation.x = THREE.Math.degToRad(-90);
 
     return floor;
 };

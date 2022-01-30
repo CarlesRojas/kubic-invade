@@ -1,9 +1,12 @@
 import SVG from "react-inlinesvg";
+import chroma from "chroma-js";
 
 import LeftIcon from "../resources/icons/left.svg";
 import RightIcon from "../resources/icons/right.svg";
 
 export default function UI({ gameDimensions, handleRotateBase }) {
+    const chromaScale = chroma.scale(["#000000", "#529aff"]);
+
     return (
         <div className="UI">
             <div
@@ -11,8 +14,19 @@ export default function UI({ gameDimensions, handleRotateBase }) {
                 style={{ height: `${gameDimensions.height}px`, width: `${gameDimensions.width}px` }}
             >
                 <div className="rotateBaseIcons" style={{ height: `${gameDimensions.width * 0.15}px` }}>
-                    <SVG className="icon" src={LeftIcon} onClick={() => handleRotateBase(false)}></SVG>
-                    <SVG className="icon" src={RightIcon} onClick={() => handleRotateBase(true)}></SVG>
+                    <SVG
+                        className="icon"
+                        src={LeftIcon}
+                        onClick={() => handleRotateBase(false)}
+                        style={{ color: chromaScale(0.25).hex() }}
+                    ></SVG>
+
+                    <SVG
+                        className="icon"
+                        src={RightIcon}
+                        onClick={() => handleRotateBase(true)}
+                        style={{ color: chromaScale(0.25).hex() }}
+                    ></SVG>
                 </div>
             </div>
         </div>

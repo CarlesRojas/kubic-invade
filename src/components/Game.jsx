@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from "react";
+import chroma from "chroma-js";
 import constants from "../constants";
 import * as THREE from "three";
 import useResize from "../hooks/useResize";
@@ -52,8 +53,7 @@ export default function Game() {
     const start = useCallback(() => {
         const { gridX, gridZ } = constants;
 
-        level.current = new Level(scene, true);
-        console.log(level.current);
+        level.current = new Level(scene, false, false);
         player.current = new Player(level, { x: Math.floor(gridX / 2), y: 0, z: Math.floor(gridZ / 2) });
 
         renderer.current.setAnimationLoop(gameLoop);
@@ -130,7 +130,8 @@ export default function Game() {
             10,
             1000
         );
-        const verticalDisplacement = 81.5;
+
+        const verticalDisplacement = 50;
         camera.current.position.set(100, 75 + verticalDisplacement, 100);
         camera.current.lookAt(0, verticalDisplacement, 0);
 
@@ -198,18 +199,23 @@ export default function Game() {
                 zDisp: direction === "bottomRight" ? -1 : direction === "topLeft" ? 1 : 0,
             });
         }
-
-        console.log(`move ${direction}`);
     };
 
     // #################################################
     //   RENDER
     // #################################################
 
-    return (
-        <div className="Game" ref={gameRef}>
-            <Gestures gameDimensions={gameDimensions} handleMove={handleMove} />
+    const chromaScale = chroma.scale(["#000000", "#529aff"]);
 
+    return (
+        <div
+            className="Game"
+            ref={gameRef}
+            style={{
+                background: `linear-gradient(0deg, ${chromaScale(0.1).hex()} 0%, ${chromaScale(0.2).hex()} 100%)`,
+            }}
+        >
+            <Gestures gameDimensions={gameDimensions} handleMove={handleMove} />
             <UI gameDimensions={gameDimensions} handleRotateBase={handleRotateBase} />
         </div>
     );
