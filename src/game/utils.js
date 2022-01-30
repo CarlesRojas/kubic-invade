@@ -3,7 +3,7 @@ import constants from "../constants";
 export const gridPosToWorldPos = ({ x, y, z }) => {
     const { cellSize, gridX, gridZ } = constants;
 
-    const worldX = x * cellSize - Math.floor(gridZ / 2) * cellSize;
+    const worldX = x * cellSize - Math.floor(gridX / 2) * cellSize;
     const worldY = y * cellSize + cellSize / 2;
     const worldZ = z * cellSize - Math.floor(gridZ / 2) * cellSize;
 

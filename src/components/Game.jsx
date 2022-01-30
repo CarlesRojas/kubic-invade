@@ -171,6 +171,34 @@ export default function Game() {
     }, 250);
 
     const handleMove = (direction) => {
+        if (!player.current || !level.current) return; //  player.current.move(rotateRight);
+
+        var currAngle = level.current.targetAngle % 360;
+        currAngle = currAngle < 0 ? 360 + currAngle : currAngle;
+        currAngle = Math.round(currAngle);
+
+        if (currAngle === 0) {
+            player.current.move({
+                xDisp: direction === "topLeft" ? -1 : direction === "bottomRight" ? 1 : 0,
+                zDisp: direction === "topRight" ? -1 : direction === "bottomLeft" ? 1 : 0,
+            });
+        } else if (currAngle === 90) {
+            player.current.move({
+                xDisp: direction === "bottomLeft" ? -1 : direction === "topRight" ? 1 : 0,
+                zDisp: direction === "topLeft" ? -1 : direction === "bottomRight" ? 1 : 0,
+            });
+        } else if (currAngle === 180) {
+            player.current.move({
+                xDisp: direction === "bottomRight" ? -1 : direction === "topLeft" ? 1 : 0,
+                zDisp: direction === "bottomLeft" ? -1 : direction === "topRight" ? 1 : 0,
+            });
+        } else if (currAngle === 270) {
+            player.current.move({
+                xDisp: direction === "topRight" ? -1 : direction === "bottomLeft" ? 1 : 0,
+                zDisp: direction === "bottomRight" ? -1 : direction === "topLeft" ? 1 : 0,
+            });
+        }
+
         console.log(`move ${direction}`);
     };
 
