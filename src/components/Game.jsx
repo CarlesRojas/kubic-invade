@@ -119,7 +119,7 @@ export default function Game() {
 
         // Create camera
         const aspectRatio = 9 / 19;
-        const cameraWidth = 100;
+        const cameraWidth = 80;
         const cameraHeight = cameraWidth / aspectRatio;
 
         camera.current = new THREE.OrthographicCamera(
@@ -172,7 +172,7 @@ export default function Game() {
     }, 250);
 
     const handleMove = (direction) => {
-        if (!player.current || !level.current) return; //  player.current.move(rotateRight);
+        if (!player.current || !level.current) return;
 
         var currAngle = level.current.targetAngle % 360;
         currAngle = currAngle < 0 ? 360 + currAngle : currAngle;
