@@ -1,7 +1,7 @@
 const constants = {
     gridX: 5,
     gridZ: 5,
-    gridY: 12,
+    gridY: 15,
     cellSize: 10,
 };
 

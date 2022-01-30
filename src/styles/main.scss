@@ -27,8 +27,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgb(80, 131, 209);
-    background: linear-gradient(-180deg, rgba(80, 131, 209, 1) 0%, rgba(145, 181, 253, 1) 100%);
+    background: rgb(12, 21, 34);
+    background: linear-gradient(0deg, rgb(12, 21, 34) 0%, rgb(13, 24, 39) 100%);
 }
 
 // #######################################
@@ -81,7 +81,7 @@
 
         .rotateBaseIcons {
             position: relative;
-            bottom: 11.2%;
+            bottom: 12%;
             left: 0;
             right: 0;
             position: absolute;
@@ -90,7 +90,7 @@
             justify-content: space-between;
 
             .icon {
-                color: rgba(0, 0, 0, 0.5);
+                color: rgba(255, 255, 255, 0.3);
                 height: 100%;
                 min-height: 100%;
                 max-height: 100%;

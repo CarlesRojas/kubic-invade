@@ -1,17 +1,20 @@
 import { useRef, useEffect, useCallback, useState } from "react";
-import { Floor, Grid, Cube } from "../game/models";
 import constants from "../constants";
 import * as THREE from "three";
 import useResize from "../hooks/useResize";
+import useThrottle from "../hooks/useThrottle";
 import Gestures from "./Gestures";
 import UI from "./UI";
+import Player from "../game/player";
+import Level from "../game/level";
 
 export default function Game() {
+    const gameRef = useRef();
+
     // #################################################
     //   SCENE
     // #################################################
 
-    const gameRef = useRef();
     const scene = useRef();
     const camera = useRef();
     const renderer = useRef();
@@ -21,280 +24,8 @@ export default function Game() {
     // #################################################
 
     const level = useRef();
+    const player = useRef();
     const grid = useRef([[[]]]);
-    const lost = useRef(false);
-
-    // #################################################
-    //   DIFFICULTY
-    // #################################################
-
-    const difficulty = useRef(0);
-    const speedLimits = useRef({ min: 200, max: 2000, step: 100 });
-    const speed = useRef(speedLimits.current.max);
-
-    const updateDifficulty = () => {
-        difficulty.current = numberOfRows.current / 4;
-    };
-
-    const updateSpeed = () => {
-        const { min, max, step } = speedLimits.current;
-        speed.current = speed.current > min ? max - difficulty.current * step : min;
-    };
-
-    // #################################################
-    //   NEXT TETRO
-    // #################################################
-
-    const nextTetro = useRef(0);
-    const currentTetro = useRef([]);
-    const currentTetroTargetPos = useRef([]);
-    const lastFallTimestamp = useRef(0);
-    const directFalling = useRef(false);
-    const [animating, setAnimating] = useState(false);
-
-    const SetNextTetro = () => {
-        const { tetrominos } = constants;
-        nextTetro.current = Math.floor(Math.random() * tetrominos.length);
-    };
-
-    const SpawnNextTetro = useCallback((timestamp = 0) => {
-        const { tetrominos, gridX, gridY, gridZ } = constants;
-
-        const randomTetro = tetrominos[nextTetro.current];
-        currentTetro.current = [];
-        currentTetroTargetPos.current = [];
-        directFalling.current = false;
-
-        if (lost.current) return;
-
-        for (let i = 0; i < randomTetro.positions.length; i++) {
-            const cube = Cube(randomTetro.color);
-
-            const initialGridPos = { x: Math.floor(gridX / 2) - 1, y: gridY + 1, z: Math.floor(gridZ / 2) - 1 };
-            const blockInitialGridPos = {
-                x: initialGridPos.x + randomTetro.positions[i][0],
-                y: initialGridPos.y + randomTetro.positions[i][1],
-                z: initialGridPos.z + randomTetro.positions[i][2],
-            };
-            const { worldX, worldY, worldZ } = gridPosToWorldPos(blockInitialGridPos);
-
-            cube.position.x = worldX;
-            cube.position.y = worldY;
-            cube.position.z = worldZ;
-
-            currentTetroTargetPos.current.push(blockInitialGridPos);
-            currentTetro.current.push(cube);
-            level.current.add(cube);
-        }
-
-        lastFallTimestamp.current = timestamp;
-
-        SetNextTetro();
-    }, []);
-
-    const isPosCorrect = (position) => {
-        const { gridX, gridY, gridZ } = constants;
-
-        for (let i = 0; i < position.length; i++) {
-            const { x, y, z } = position[i];
-
-            if (x < 0 || x >= gridX) return false;
-            if (y < 0) return false;
-            if (z < 0 || z >= gridZ) return false;
-            if (y >= 0 && y < gridY && grid.current[x][y][z]) return false;
-        }
-
-        return true;
-    };
-
-    const keepFalling = useCallback(
-        (timestamp) => {
-            if (directFalling.current) return;
-
-            const { gridY } = constants;
-            if (timestamp - lastFallTimestamp.current >= speed.current) {
-                lastFallTimestamp.current = timestamp;
-
-                const newTargetPos = [];
-
-                for (let i = 0; i < currentTetroTargetPos.current.length; i++) {
-                    newTargetPos.push({
-                        ...currentTetroTargetPos.current[i],
-                        y: currentTetroTargetPos.current[i].y - 1,
-                    });
-                }
-
-                if (!isPosCorrect(newTargetPos)) {
-                    // Save tetro to grid
-                    for (let i = 0; i < currentTetro.current.length; i++) {
-                        const tetro = currentTetro.current[i];
-                        const targetPos = currentTetroTargetPos.current[i];
-
-                        if (targetPos.y >= gridY) {
-                            lost.current = true;
-                            break;
-                        }
-
-                        grid.current[targetPos.x][targetPos.y][targetPos.z] = tetro;
-                    }
-
-                    // Spawn next tetro
-                    SpawnNextTetro();
-                    return;
-                }
-
-                currentTetroTargetPos.current = newTargetPos;
-            }
-        },
-        [SpawnNextTetro]
-    );
-
-    const fallDirectly = useCallback(() => {
-        const { gridY } = constants;
-
-        var newTargetPos = [];
-        var lastCorrectPos = [];
-
-        for (let i = 0; i < currentTetroTargetPos.current.length; i++)
-            newTargetPos.push({ ...currentTetroTargetPos.current[i] });
-
-        var yDisp = 1;
-        do {
-            lastCorrectPos = [];
-            for (let i = 0; i < newTargetPos.length; i++) lastCorrectPos.push({ ...newTargetPos[i] });
-            newTargetPos = [];
-
-            for (let i = 0; i < currentTetroTargetPos.current.length; i++) {
-                newTargetPos.push({
-                    ...currentTetroTargetPos.current[i],
-                    y: currentTetroTargetPos.current[i].y - yDisp,
-                });
-            }
-
-            yDisp++;
-        } while (isPosCorrect(newTargetPos) && yDisp < gridY + 5);
-
-        // Save tetro to grid
-        for (let i = 0; i < currentTetro.current.length; i++) {
-            const tetro = currentTetro.current[i];
-            const targetPos = lastCorrectPos[i];
-
-            if (targetPos.y >= gridY) {
-                lost.current = true;
-                break;
-            }
-
-            grid.current[targetPos.x][targetPos.y][targetPos.z] = tetro;
-        }
-
-        currentTetroTargetPos.current = lastCorrectPos;
-    }, []);
-
-    useEffect(() => {
-        if (!animating && directFalling.current) {
-            directFalling.current = false;
-
-            // Spawn next tetro
-            SpawnNextTetro();
-        }
-    }, [animating, SpawnNextTetro]);
-
-    const moveTetro = useCallback(({ x, z }) => {
-        const newTargetPos = [];
-
-        for (let i = 0; i < currentTetroTargetPos.current.length; i++) {
-            newTargetPos.push({
-                ...currentTetroTargetPos.current[i],
-                x: currentTetroTargetPos.current[i].x + x,
-                z: currentTetroTargetPos.current[i].z + z,
-            });
-        }
-
-        if (!isPosCorrect(newTargetPos)) {
-            // ROJAS PLAY HIT WALL SOUND
-            return;
-        }
-
-        currentTetroTargetPos.current = newTargetPos;
-    }, []);
-
-    // #################################################
-    //   MOVE TETRO
-    // #################################################
-
-    const animateBlocks = useCallback((deltaTime) => {
-        const { cubeSize } = constants;
-
-        var anim = false;
-
-        for (let i = 0; i < currentTetro.current.length; i++) {
-            const tetro = currentTetro.current[i];
-            const targetPos = currentTetroTargetPos.current[i];
-
-            const step = (cubeSize / 50) * deltaTime;
-
-            const { worldX, worldY, worldZ } = gridPosToWorldPos(targetPos);
-
-            if (tetro.position.x > worldX) {
-                anim = true;
-                tetro.position.x = Math.max(worldX, tetro.position.x - step);
-            } else if (tetro.position.x < worldX) {
-                anim = true;
-                tetro.position.x = Math.min(worldX, tetro.position.x + step);
-            }
-
-            if (tetro.position.y > worldY) {
-                anim = true;
-                tetro.position.y = Math.max(worldY, tetro.position.y - step);
-            } else if (tetro.position.y < worldY) {
-                anim = true;
-                tetro.position.y = Math.min(worldY, tetro.position.y + step);
-            }
-
-            if (tetro.position.z > worldZ) {
-                anim = true;
-                tetro.position.z = Math.max(worldZ, tetro.position.z - step);
-            } else if (tetro.position.z < worldZ) {
-                anim = true;
-                tetro.position.z = Math.min(worldZ, tetro.position.z + step);
-            }
-        }
-
-        setAnimating(anim);
-    }, []);
-
-    const gridPosToWorldPos = ({ x, y, z }) => {
-        const { cubeSize, gridX, gridZ } = constants;
-
-        const worldX = x * cubeSize - (gridX / 2) * cubeSize + cubeSize / 2;
-        const worldY = y * cubeSize + cubeSize / 2;
-        const worldZ = z * cubeSize - (gridZ / 2) * cubeSize + cubeSize / 2;
-
-        return { worldX, worldY, worldZ };
-    };
-
-    // #################################################
-    //   MOVE LEVEL
-    // #################################################
-
-    const levelTargetAngle = useRef(THREE.Math.degToRad(0));
-
-    const animateLevel = useCallback((deltaTime) => {
-        for (let i = 0; i < currentTetro.current.length; i++) {
-            const step = (THREE.Math.degToRad(90) / 500) * deltaTime;
-
-            if (level.current.rotation.y > levelTargetAngle.current)
-                level.current.rotation.y = Math.max(levelTargetAngle.current, level.current.rotation.y - step);
-            else if (level.current.rotation.y < levelTargetAngle.current)
-                level.current.rotation.y = Math.min(levelTargetAngle.current, level.current.rotation.y + step);
-        }
-    }, []);
-
-    // #################################################
-    //   SCORE
-    // #################################################
-
-    const numberOfRows = useRef(0);
 
     // #################################################
     //   GAME LOOP
@@ -309,27 +40,24 @@ export default function Game() {
         return deltaTime;
     };
 
-    const gameLoop = useCallback(
-        (timestamp) => {
-            const deltaTime = getDeltaTime(timestamp);
+    const gameLoop = useCallback((timestamp) => {
+        const deltaTime = getDeltaTime(timestamp);
 
-            updateDifficulty();
-            updateSpeed();
-            keepFalling(timestamp);
-            animateBlocks(deltaTime);
-            animateLevel(deltaTime);
+        if (level.current) level.current.update(deltaTime);
+        if (player.current) player.current.update(deltaTime);
 
-            renderer.current.render(scene.current, camera.current);
-        },
-        [keepFalling, animateBlocks, animateLevel]
-    );
+        renderer.current.render(scene.current, camera.current);
+    }, []);
 
     const start = useCallback(() => {
-        SetNextTetro();
-        SpawnNextTetro();
+        const { gridX, gridZ } = constants;
+
+        level.current = new Level(scene, true);
+        console.log(level.current);
+        player.current = new Player(level, { x: Math.floor(gridX / 2), y: 0, z: Math.floor(gridZ / 2) });
 
         renderer.current.setAnimationLoop(gameLoop);
-    }, [gameLoop, SpawnNextTetro]);
+    }, [gameLoop]);
 
     const stop = () => {
         renderer.setAnimationLoop(null);
@@ -381,24 +109,6 @@ export default function Game() {
         // Create Scene
         scene.current = new THREE.Scene();
 
-        level.current = new THREE.Group();
-        scene.current.add(level.current);
-
-        const floor = Floor();
-        level.current.add(floor);
-
-        const showGrid = false;
-        if (showGrid) {
-            const gridHelper = Grid();
-            level.current.add(gridHelper);
-        }
-
-        const showAxis = false;
-        if (showAxis) {
-            var axesHelper = new THREE.AxesHelper(5);
-            scene.current.add(axesHelper);
-        }
-
         // Create lights
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.current.add(ambientLight);
@@ -409,7 +119,7 @@ export default function Game() {
 
         // Create camera
         const aspectRatio = 9 / 19;
-        const cameraWidth = 80;
+        const cameraWidth = 100;
         const cameraHeight = cameraWidth / aspectRatio;
 
         camera.current = new THREE.OrthographicCamera(
@@ -420,8 +130,9 @@ export default function Game() {
             10,
             1000
         );
-        camera.current.position.set(100, 140, 100);
-        camera.current.lookAt(0, 65, 0);
+        const verticalDisplacement = 81.5;
+        camera.current.position.set(100, 75 + verticalDisplacement, 100);
+        camera.current.lookAt(0, verticalDisplacement, 0);
 
         // Create renderer
         const width = gameRef.current.clientWidth;
@@ -455,47 +166,13 @@ export default function Game() {
     //   USER ACTIONS
     // #################################################
 
-    const handleRotateBase = (rotateRight) => {
-        if (rotateRight) levelTargetAngle.current = levelTargetAngle.current + THREE.Math.degToRad(90);
-        else levelTargetAngle.current = levelTargetAngle.current - THREE.Math.degToRad(90);
-    };
+    const handleRotateBase = useThrottle((rotateRight) => {
+        if (level.current) level.current.rotate(rotateRight);
+    }, 250);
 
     const handleMove = (direction) => {
-        if (directFalling.current) return;
-
-        var currAngle = THREE.Math.radToDeg(levelTargetAngle.current) % 360;
-        currAngle = currAngle < 0 ? 360 + currAngle : currAngle;
-        currAngle = Math.round(currAngle);
-
-        if (currAngle === 0) {
-            moveTetro({
-                x: direction === "topLeft" ? -1 : direction === "bottomRight" ? 1 : 0,
-                z: direction === "topRight" ? -1 : direction === "bottomLeft" ? 1 : 0,
-            });
-        } else if (currAngle === 90) {
-            moveTetro({
-                x: direction === "bottomLeft" ? -1 : direction === "topRight" ? 1 : 0,
-                z: direction === "topLeft" ? -1 : direction === "bottomRight" ? 1 : 0,
-            });
-        } else if (currAngle === 180) {
-            moveTetro({
-                x: direction === "bottomRight" ? -1 : direction === "topLeft" ? 1 : 0,
-                z: direction === "bottomLeft" ? -1 : direction === "topRight" ? 1 : 0,
-            });
-        } else if (currAngle === 270) {
-            moveTetro({
-                x: direction === "topRight" ? -1 : direction === "bottomLeft" ? 1 : 0,
-                z: direction === "bottomRight" ? -1 : direction === "topLeft" ? 1 : 0,
-            });
-        }
+        console.log(`move ${direction}`);
     };
-
-    const handleDoubleClick = useCallback(() => {
-        if (directFalling.current) return;
-
-        fallDirectly();
-        directFalling.current = true;
-    }, [fallDirectly]);
 
     // #################################################
     //   RENDER
@@ -503,7 +180,7 @@ export default function Game() {
 
     return (
         <div className="Game" ref={gameRef}>
-            <Gestures gameDimensions={gameDimensions} handleMove={handleMove} handleDoubleClick={handleDoubleClick} />
+            <Gestures gameDimensions={gameDimensions} handleMove={handleMove} />
 
             <UI gameDimensions={gameDimensions} handleRotateBase={handleRotateBase} />
         </div>
