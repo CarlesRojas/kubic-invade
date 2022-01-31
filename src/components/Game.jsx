@@ -215,8 +215,8 @@ export default function Game() {
                 background: `linear-gradient(0deg, ${chromaScale(0.1).hex()} 0%, ${chromaScale(0.2).hex()} 100%)`,
             }}
         >
-            <Gestures gameDimensions={gameDimensions} handleMove={handleMove} />
-            <UI gameDimensions={gameDimensions} handleRotateBase={handleRotateBase} />
+            <Gestures gameDimensions={gameDimensions} handleMove={handleMove} handleRotateBase={handleRotateBase} />
+            <UI gameDimensions={gameDimensions} />
         </div>
     );
 }

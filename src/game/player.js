@@ -52,7 +52,8 @@ export default class Player {
 
         const { cellSize } = constants;
 
-        const step = (cellSize / 50) * deltaTime;
+        const animationDurationMs = 50;
+        const step = (cellSize / animationDurationMs) * deltaTime;
 
         const { worldX, worldY, worldZ } = gridPosToWorldPos(this.targetPos);
 

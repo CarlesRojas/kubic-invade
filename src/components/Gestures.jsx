@@ -1,9 +1,8 @@
 import { useRef } from "react";
 import { useDrag } from "@use-gesture/react";
 import { xyToIso } from "../game/utils";
-import useDoubleClick from "../hooks/useDoubleClick";
 
-export default function Gestures({ gameDimensions, handleMove, handleDoubleClick, onRotateX, onRotateY, onRotateZk }) {
+export default function Gestures({ gameDimensions, handleMove, handleRotateBase }) {
     // #################################################
     //   GESTURES
     // #################################################
@@ -38,11 +37,18 @@ export default function Gestures({ gameDimensions, handleMove, handleDoubleClick
     );
 
     // #################################################
-    //   DOUBLE CLICK
+    //   HANDLE CLICK
     // #################################################
 
-    const doubleClickRef = useRef();
-    useDoubleClick({ onDoubleClick: handleDoubleClick, ref: doubleClickRef });
+    const moveTetroRef = useRef();
+
+    const handleClick = (event) => {
+        const box = moveTetroRef.current.getBoundingClientRect();
+        const clickX = event.clientX - box.left;
+
+        if (clickX <= box.width / 2) handleRotateBase(false);
+        else handleRotateBase(true);
+    };
 
     // #################################################
     //   RENDER
@@ -50,7 +56,7 @@ export default function Gestures({ gameDimensions, handleMove, handleDoubleClick
 
     return (
         <div className="Gestures">
-            <div className="moveTetro" {...moveGestureBind()} ref={doubleClickRef}></div>
+            <div className="moveTetro" {...moveGestureBind()} onClick={handleClick} ref={moveTetroRef}></div>
         </div>
     );
 }
