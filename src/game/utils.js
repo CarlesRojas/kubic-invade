@@ -64,3 +64,8 @@ export const isoToXy = ({ x, z }) => {
     const result = multiplyMatrices([[-x, -z]], transformMatrix);
     return { x: result[0][0], y: result[0][1] };
 };
+
+// min and max included
+export const randomIntFromInterval = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+};

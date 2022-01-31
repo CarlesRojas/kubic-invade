@@ -8,6 +8,7 @@ import Gestures from "./Gestures";
 import UI from "./UI";
 import Player from "../game/player";
 import Level from "../game/level";
+import Stage from "../game/stage";
 
 export default function Game() {
     const gameRef = useRef();
@@ -26,7 +27,7 @@ export default function Game() {
 
     const level = useRef();
     const player = useRef();
-    const grid = useRef([[[]]]);
+    const stage = useRef();
 
     // #################################################
     //   GAME LOOP
@@ -44,8 +45,9 @@ export default function Game() {
     const gameLoop = useCallback((timestamp) => {
         const deltaTime = getDeltaTime(timestamp);
 
-        if (level.current) level.current.update(deltaTime);
-        if (player.current) player.current.update(deltaTime);
+        if (level.current) level.current.update(deltaTime, timestamp);
+        if (player.current) player.current.update(deltaTime, timestamp);
+        if (stage.current) stage.current.update(deltaTime, timestamp);
 
         renderer.current.render(scene.current, camera.current);
     }, []);
@@ -55,6 +57,7 @@ export default function Game() {
 
         level.current = new Level(scene, false, false);
         player.current = new Player(level, { x: Math.floor(gridX / 2), y: 0, z: Math.floor(gridZ / 2) });
+        stage.current = new Stage(level);
 
         renderer.current.setAnimationLoop(gameLoop);
     }, [gameLoop]);
@@ -91,21 +94,6 @@ export default function Game() {
     // #################################################
 
     useEffect(() => {
-        const { gridX, gridY, gridZ } = constants;
-
-        // Init grid
-        const xArray = [];
-        for (let i = 0; i < gridX; i++) {
-            const yArray = [];
-            for (let j = 0; j < gridY; j++) {
-                const zArray = [];
-                for (let k = 0; k < gridZ; k++) zArray.push(null);
-                yArray.push(zArray);
-            }
-            xArray.push(yArray);
-        }
-        grid.current = xArray;
-
         // Create Scene
         scene.current = new THREE.Scene();
 

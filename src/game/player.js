@@ -14,14 +14,15 @@ export default class Player {
         const { worldX, worldY, worldZ } = gridPosToWorldPos(initialPos);
 
         // PLAYER
-        this.player = new THREE.Mesh(
+        this.object = new THREE.Mesh(
             new THREE.BoxBufferGeometry(cellSize * 0.5, cellSize * 0.5, cellSize * 0.5),
             new THREE.MeshLambertMaterial({ color: "#e6e6e6" })
         );
-        this.player.position.x = worldX;
-        this.player.position.y = worldY;
-        this.player.position.z = worldZ;
-        level.current.add(this.player);
+        this.object.name = "player";
+        this.object.position.x = worldX;
+        this.object.position.y = worldY;
+        this.object.position.z = worldZ;
+        level.current.add(this.object);
 
         // SHADOW
         this.shadow = new THREE.Mesh(
@@ -38,7 +39,7 @@ export default class Player {
         this.bullets = [];
         this.timeBetweenBullets = 500;
         this.interval = setInterval(() => {
-            this.bullets.push(new Bullet(level, this, this.targetPos, { friendly: true }));
+            this.bullets.push(new Bullet(level, this.object.position, { friendly: true }));
         }, this.timeBetweenBullets);
     }
 
@@ -52,7 +53,7 @@ export default class Player {
     }
 
     move({ xDisp, zDisp }) {
-        if (!this.player) return;
+        if (!this.object) return;
 
         const newPos = { x: this.targetPos.x + xDisp, y: this.targetPos.y, z: this.targetPos.z + zDisp };
 
@@ -60,7 +61,7 @@ export default class Player {
     }
 
     #animate(deltaTime) {
-        if (!this.player) return;
+        if (!this.object) return;
 
         const { cellSize } = constants;
 
@@ -69,21 +70,21 @@ export default class Player {
 
         const { worldX, worldY, worldZ } = gridPosToWorldPos(this.targetPos);
 
-        if (this.player.position.x > worldX) this.player.position.x = Math.max(worldX, this.player.position.x - step);
-        else if (this.player.position.x < worldX)
-            this.player.position.x = Math.min(worldX, this.player.position.x + step);
+        if (this.object.position.x > worldX) this.object.position.x = Math.max(worldX, this.object.position.x - step);
+        else if (this.object.position.x < worldX)
+            this.object.position.x = Math.min(worldX, this.object.position.x + step);
 
-        if (this.player.position.y > worldY) this.player.position.y = Math.max(worldY, this.player.position.y - step);
-        else if (this.player.position.y < worldY)
-            this.player.position.y = Math.min(worldY, this.player.position.y + step);
+        if (this.object.position.y > worldY) this.object.position.y = Math.max(worldY, this.object.position.y - step);
+        else if (this.object.position.y < worldY)
+            this.object.position.y = Math.min(worldY, this.object.position.y + step);
 
-        if (this.player.position.z > worldZ) this.player.position.z = Math.max(worldZ, this.player.position.z - step);
-        else if (this.player.position.z < worldZ)
-            this.player.position.z = Math.min(worldZ, this.player.position.z + step);
+        if (this.object.position.z > worldZ) this.object.position.z = Math.max(worldZ, this.object.position.z - step);
+        else if (this.object.position.z < worldZ)
+            this.object.position.z = Math.min(worldZ, this.object.position.z + step);
 
-        this.shadow.position.x = this.player.position.x;
+        this.shadow.position.x = this.object.position.x;
         this.shadow.position.y = 0.2;
-        this.shadow.position.z = this.player.position.z;
+        this.shadow.position.z = this.object.position.z;
     }
 
     #animateBullets(deltaTime, timestamp) {
@@ -94,9 +95,9 @@ export default class Player {
             bullet.update(deltaTime, timestamp);
 
             // Destoy bullet when out of viewport
-            if (isPosOutsideViewport(bullet.bullet.position)) {
-                this.level.current.remove(bullet.bullet);
-                this.bullets.shift();
+            if (isPosOutsideViewport(bullet.object.position)) {
+                this.level.current.remove(bullet.object);
+                this.bullets.splice(i, 1);
                 --i;
             }
         }
