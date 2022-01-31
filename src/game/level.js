@@ -30,6 +30,14 @@ export default class Level {
         this.level.add(mesh);
     }
 
+    getObjectByName(name) {
+        return this.level.getObjectByName(name);
+    }
+
+    remove(mesh) {
+        this.level.remove(mesh);
+    }
+
     rotate(rotateRight) {
         if (!this.level) return;
 

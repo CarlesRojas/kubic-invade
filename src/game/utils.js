@@ -20,6 +20,16 @@ export const isPosInsideGrid = ({ x, y, z }) => {
     return true;
 };
 
+export const isPosOutsideViewport = ({ x, y, z }) => {
+    const { cellSize, gridX, gridY, gridZ } = constants;
+
+    if (x < -cellSize * 3 || x > cellSize * (gridX + 3)) return true;
+    if (y < -cellSize * 3 || y > cellSize * (gridY + 3)) return true;
+    if (z < -cellSize * 3 || z > cellSize * (gridZ + 3)) return true;
+
+    return false;
+};
+
 function multiplyMatrices(m1, m2) {
     var result = [];
     for (var i = 0; i < m1.length; i++) {

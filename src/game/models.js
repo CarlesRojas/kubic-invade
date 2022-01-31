@@ -9,7 +9,7 @@ export const Floor = () => {
 
     var floor = new THREE.Mesh(
         new THREE.PlaneGeometry(cellSize * gridX, cellSize * gridZ),
-        new THREE.MeshLambertMaterial({ color: chromaScale(0.25).hex(), transparent: true, opacity: 0.6 })
+        new THREE.MeshLambertMaterial({ color: chromaScale(0.3).hex(), transparent: true, opacity: 0.6 })
     );
 
     floor.rotation.x = THREE.Math.degToRad(-90);
